@@ -25,6 +25,8 @@ return new class extends Migration
             $table->string('status')->nullable();
             $table->integer('frequency')->default(0);
             $table->json('history')->nullable();
+            $table->timestamp('last_posted')->nullable();
+            $table->timestamp('next_to_post')->nullable();
             $table->timestamps();
         });
     }

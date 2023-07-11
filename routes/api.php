@@ -37,11 +37,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/user-apps/create','store');
         Route::get('/user-apps/index','index');
         Route::post('/user-apps/update-access-token','updateAccessToken');
+        Route::get('/user-apps/{id}','show');
     });
 
     Route::controller(PostSchedulersController::class)->group(function(){
         Route::get('/schedule-post/posts','index');
         Route::post('/schedule-post/create','store');
+        Route::delete('/schedule-post/{id}/delete','destroy');
     });
 });
 

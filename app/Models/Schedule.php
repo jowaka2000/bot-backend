@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Casts\SchedulerCreatedAtCast;
+use App\Casts\SchedulerMessageContentCast;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -34,4 +36,10 @@ class Schedule extends Model
 
         return $query;
     }
+
+
+    protected $casts = [
+        'messageContent'=>SchedulerMessageContentCast::class,
+        'created_at'=>SchedulerCreatedAtCast::class,
+    ];
 }
