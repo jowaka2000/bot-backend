@@ -9,6 +9,7 @@ use Carbon\Carbon;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 class PostOnFacebookPageCommand extends Command
 {
@@ -31,11 +32,13 @@ class PostOnFacebookPageCommand extends Command
      */
     public function handle()
     {
+        Log::emergency("Start");
 
-
-
-        $schedulers1 = Schedule::join('apps', 'apps.page_id', '=', 'schedules.app_id')
+        $schedulers1 = Schedule::join('apps', 'apps.id', '=', 'schedules.app_id')
             ->where('schedules.active', true)
+            ->where('apps.active', true)
+            ->where('apps.approved',true)
+            ->where('apps.activated',true)
             ->where('apps.bot_type', '=', 'facebook-page')
             ->select('schedules.*')
             ->get();
@@ -46,17 +49,20 @@ class PostOnFacebookPageCommand extends Command
         if (count($schedulers) > 0) {
 
             foreach ($schedulers as $schedule) {
-                $app = App::where('page_id', $schedule->app_id)->first();
+                $app = $schedule->app;
 
-                if ($app) {
+                if ($app && $app->active) {
                     //do all the logic here
 
 
                     if ($schedule->schedule !== 'once' && $schedule->schedule !== 'none') {
 
-
                         $this->checkToPost($schedule);
+                    }else{
+                        return;
                     }
+                }else{
+                    return;
                 }
             }
         }else{
@@ -119,8 +125,7 @@ class PostOnFacebookPageCommand extends Command
 
     public function postToFacebookPage(Schedule $schedule, $nextTimeToPost)
     {
-
-        $app = App::where('page_id', $schedule->app_id)->first();
+        $app = $schedule->app;
 
         if ($app && $app->bot_type == 'facebook-page') {
 
@@ -206,7 +211,7 @@ class PostOnFacebookPageCommand extends Command
 
                 if ($images && count($images) > 0) {
                     //post the image and the message -----------------------------------------------------
-                    dd('images');
+                
                     $imageIndexToPost = $this->imageIndexToPost($schedule->history, $images);
 
                     $messageIndexToPost = $this->messageContentIndexToPost($schedule->history, $messages);
@@ -348,7 +353,7 @@ class PostOnFacebookPageCommand extends Command
 
             if (array_key_exists('error',$re)) {
                 Fail::create([
-                    'app_id' => $schedule->page_id,
+                    'app_id' => $schedule->app_id,
                     'message' => $re['error']['message'],
                     'code' => $re['error']['code'],
                     'type' => $re['error']['code'],
@@ -389,7 +394,7 @@ class PostOnFacebookPageCommand extends Command
 
             if (array_key_exists('error',$re)) {
                 Fail::create([
-                    'app_id' => $schedule->page_id,
+                    'app_id' => $schedule->app_id,
                     'message' => $re['error']['message'],
                     'code' => $re['error']['code'],
                     'type' => $re['error']['code'],

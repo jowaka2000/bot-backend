@@ -45,11 +45,26 @@ class User extends Authenticatable
     ];
 
 
-    public function apps(){
+    public function apps()
+    {
         return $this->hasMany(App::class);
     }
 
-    public function schedules(){
+    public function schedules()
+    {
         return $this->hasMany(Schedule::class);
+    }
+
+    public function admin(User $user)
+    {
+        $isAdmin = false;
+
+        if (in_array($user->email, [
+            'kimemiajohn@gmail.com',
+        ])) {
+            $isAdmin = true;
+        }
+
+        return $isAdmin;
     }
 }

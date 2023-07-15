@@ -17,7 +17,16 @@ class App extends Model
     }
 
     public function scopeAllApps($query,$user_Id){
-        return $query->where('user_id',$user_Id)->orderby('created_at','desc')->get();
+
+        $user = User::find($user_Id);
+
+        if($user && $user->admin($user)){
+            $query = $query->orderby('created_at','desc')->get();
+        }else{
+           $query= $query->where('user_id',$user_Id)->orderby('created_at','desc')->get();
+        }
+
+        return $query;
     }
 
     public function schedules(){
@@ -26,5 +35,6 @@ class App extends Model
 
     protected $casts = [
         'page_id'=>'int',
+        'active'=>'boolean',
     ];
 }

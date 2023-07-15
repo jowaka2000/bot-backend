@@ -24,17 +24,9 @@ class Schedule extends Model
     }
 
 
-    public function scopeSchedulers($query,$user_id){
+    public function scopeSchedulers($query,$app_id){
 
-        $user= User::find($user_id);
-
-        if($user->email==='kimemiajohn@gmail.com'){
-            $query = $query->orderby('created_at','desc')->get();
-        }else{
-            $query = $query->where('user_id',$user_id)->orderby('created_at','desc')->get();
-        }
-
-        return $query;
+        return $query->where('app_id',$app_id)->orderby('created_at','desc')->get();
     }
 
 

@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthsController;
 use App\Http\Controllers\Api\PostSchedulersController;
+use App\Http\Controllers\Api\TelegramApisController;
 use App\Http\Controllers\Api\UserAppsController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -26,7 +27,9 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', function (Request $request) {
         $user = $request->user();
 
-        return response(compact('user'));
+        $isAdmin = $user->admin($user);
+
+        return response(compact('user','isAdmin'));
     });
 
     Route::get('/logout', [AuthsController::class, 'logout']);
@@ -37,13 +40,22 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/user-apps/create','store');
         Route::get('/user-apps/index','index');
         Route::post('/user-apps/update-access-token','updateAccessToken');
+        Route::post('/user-apps/update-telegram-username-token','updateTelegramAccessTokenAndUsername');
         Route::get('/user-apps/{id}','show');
+        Route::post('/user-apps/{id}/update','update');
+        Route::post('/user-apps/{id}/update-app-approve','appApprove');
     });
 
     Route::controller(PostSchedulersController::class)->group(function(){
-        Route::get('/schedule-post/posts','index');
+        Route::get('/schedule-post/posts/{app_id}','index');
         Route::post('/schedule-post/create','store');
         Route::delete('/schedule-post/{id}/delete','destroy');
+    });
+
+
+    Route::controller(TelegramApisController::class)->group(function(){
+        Route::get('/telegram/get-channels/{app_id} ','getChannels');
+        Route::post('/telegram/set-chat-id/{app_id}','setChatId');
     });
 });
 

@@ -14,6 +14,7 @@ class Kernel extends ConsoleKernel
     {
         // $schedule->command('inspire')->hourly();
         $schedule->command('post:facebook-page')->everyMinute();
+        $schedule->command('post:telegram')->everyMinute();
 
     }
 

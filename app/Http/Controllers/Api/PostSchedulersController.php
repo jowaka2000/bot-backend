@@ -14,19 +14,20 @@ use Illuminate\Support\Str;
 class PostSchedulersController extends Controller
 {
 
-    public function index(Request $request)
+    public function index(Request $request,$app_id)
     {
 
-
         $user = $request->user();
+        $app = App::where('search_id',$app_id)->first();
 
         /** @var User $user */
 
-        if (!$user) {
-            return response('data not found', 409);
+        if (!$user || !$app) {
+            return response('data not found', 200);
         }
 
-        $schedulers = Schedule::schedulers($user->id);
+
+        $schedulers = Schedule::schedulers($app->id);
 
         return response(compact('schedulers'));
     }
@@ -34,7 +35,6 @@ class PostSchedulersController extends Controller
 
     public function store(Request $request, PostOnFacebookAction $postOnFacebookAction)
     {
-
 
         $user = $request->user();
 
@@ -48,7 +48,7 @@ class PostSchedulersController extends Controller
         if ($request->has('payLoad')) {
 
             $data = json_decode($request->get('payLoad'), true);
-            $appId = $data['pageId']['id'];
+            $appId = $data['appId'];//search id
             $messages = $data['messageContent']; //array
             $url = $data['url'];
             $schedule = $data['schedule'];
@@ -56,11 +56,15 @@ class PostSchedulersController extends Controller
             $publishPost = $data['publishPost'];
 
 
+
+
+
             if (!$appId) {
                 return response('App Not Found!', 499);
             }
 
-            $app = App::where('page_id', $appId)->first();
+            $app = App::where('search_id', $appId)->first();
+
 
             $nextTimeToPost = null;
 
@@ -95,8 +99,9 @@ class PostSchedulersController extends Controller
                 $nextTimeToPost = now()->addWeek();
             }
 
+
             $schedule = $user->schedules()->create([
-                'app_id' => $appId,
+                'app_id' => $app->id,//bot id
                 'messageContent' => json_encode($messages),
                 'url' => $url,
                 'schedule' => $schedule,
