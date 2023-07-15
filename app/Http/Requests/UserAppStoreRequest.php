@@ -23,9 +23,15 @@ class UserAppStoreRequest extends FormRequest
     {
         return [
             'botType' => 'required',
-            'appName' => 'required',
-            'pageName' => 'required',
-            'pageID' => 'required|unique:apps,page_id',
+            'botName' => 'required',
+            'mediaName' => 'sometimes',
+            'pageID' => 'sometimes',
+            'userID' => 'sometimes',
+            'botNickname' => 'sometimes',
+            'channelLink' => 'sometimes',
+            'botUsername' => 'sometimes',
+            'botAccessToken' => 'sometimes',
+            'botLink' => 'sometimes',
         ];
     }
 }

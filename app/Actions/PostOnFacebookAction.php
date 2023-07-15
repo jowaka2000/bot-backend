@@ -14,9 +14,9 @@ class PostOnFacebookAction
     public function execute(Schedule $schedule)
     {
 
-        $app = App::where('page_id', $schedule->app_id)->first();
+        $app = $schedule->app;
 
-        if ($app && $app->bot_type == 'facebook-page') {
+        if ($app && $app->active && $app->bot_type == 'facebook-page') {
 
 
             $accessToken = $app->access_token;
@@ -117,6 +117,8 @@ class PostOnFacebookAction
                     $this->messageAndUrl($pageId, $accessToken, $message, $link, $schedule, $history);
                 }
             }
+        }else{
+            return;
         }
     }
 

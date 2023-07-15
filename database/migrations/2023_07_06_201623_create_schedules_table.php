@@ -27,6 +27,8 @@ return new class extends Migration
             $table->json('history')->nullable();
             $table->timestamp('last_posted')->nullable();
             $table->timestamp('next_to_post')->nullable();
+            $table->boolean('post_at_night')->default(true);
+            $table->string('time_zone')->default('Africa/Addis_Ababa');
             $table->timestamps();
         });
     }

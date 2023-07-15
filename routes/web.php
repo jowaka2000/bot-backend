@@ -3,8 +3,17 @@
 use App\Http\Controllers\TestController;
 use App\Models\App;
 use App\Models\Schedule;
+use App\Models\User;
+// use FacebookAds\Api;
+use FacebookAds\Object\AdAccount;
+use FacebookAds\Object\Fields\AdAccountFields;
+use FacebookAds\Object\Fields\AdSetFields;
+use Faker\Provider\Uuid;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
+use Telegram\Bot\Laravel\Facades\Telegram;
+use Illuminate\Support\Str;
+use Telegram\Bot\Api;
 
 /*
 |--------------------------------------------------------------------------
@@ -17,38 +26,119 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::get('/media-bot-v001', function () {
+Route::get('/', function () {
+
+
+    $schedulers = Schedule::join('apps', 'apps.id', '=', 'schedules.app_id')
+    ->where('schedules.active', true)
+    ->where('apps.active', true)
+    ->where('apps.activated', true)
+    ->where('apps.approved', true)
+    ->where(function ($query) {
+        return $query->where('apps.bot_type', '=', 'telegram-channel')->orWhere('apps.bot_type', '=', 'telegram-group');
+    })
+    ->whereNot('schedules.schedule','=','once')
+    ->select('schedules.*')
+    ->get();
+
+    dd($schedulers);
+
+
+        if(count($schedulers)>0){
+
+            foreach($schedulers as $scheduler){
+                $app= $scheduler->app;
+                dd($scheduler);
+
+
+            }
+        }
+
+    $user = User::find(1);
 
 
 
-    // app api_id 24145410
-    // app api_hash 4f1f16765ad7cd59117b97b9f5ac1196
-
-    //test configuaration 149.154.167.40:443
-    //key MIIBCgKCAQEAyMEdY1aR+sCR3ZSJrtztKTKqigvO/vBfqACJLZtS7QMgCGXJ6XIR
-// yy7mx66W0/sOFa7/1mAZtEoIokDP3ShoqF4fVNb6XeqgQfaUHd8wJpDWHcR2OFwv
-// plUUI1PLTktZ9uW2WE23b+ixNwJjJGwBDJPQEQFBE+vfmH0JP503wr5INS1poWg/
-// j25sIWeYPHYeOrFp/eXaqhISP6G+q2IeTaWTXpwZj4LzXq5YOpk4bYEQ6mvRq7D1
-// aHWfYmlEGepfaYR8Q0YqvvhYtMte3ITnuSJs171+GDqpdKcSwHnd6FudwGO4pcCO
-// j4WcDuXc2CTHgH8gFTNhp/Y8/SpDOhvn9QIDAQAB
 
 
-//production configuaration  149.154.167.50:443
-//key MIIBCgKCAQEA6LszBcC1LGzyr992NzE0ieY+BSaOW622Aa9Bd4ZHLl+TuFQ4lo4g
-// 5nKaMBwK/BIb9xUfg0Q29/2mgIR6Zr9krM7HjuIcCzFvDtr+L0GQjae9H0pRB2OO
-// 62cECs5HKhT5DZ98K33vmWiLowc621dQuwKWSQKjWf50XYFw42h21P2KXUGyp2y/
-// +aEyZ+uVgLLQbRA1dEjSDZ2iGRy12Mk5gpYc397aYp438fsJoHIgJ2lgMv5h7WY9
-// t6N/byY9Nw9p21Og3AoXSL2q/2IJ1WRUhebgAdGVMlV1fkuOQoEzR7EdpqtQD9Cs
-// 5+bfo3Nhmcyvk5ftB0WkJ9z6bNZ7yxrP8wIDAQAB
+
+    $api  = new Api();
 
 
+
+    // $response =  Telegram::getMe();
+    $updates = $api->getUpdates();
+
+    $data = json_decode($updates[2], true);
+
+    $re = Telegram::sendMessage([
+        'chat_id' => $data['message']['chat']['id'],
+        'text' => 'Hachiuw!'
+    ]);
+
+
+
+    dd($re);
+
+
+    // $response = Telegram::sendMessage([
+    //     'chat_id' => $data['message']['chat']['id'],
+    //     'text' => 'I am from california'
+    // ]);
+
+
+    // dd($response);
+
+    // foreach($updates as $key=>$update){
+    //     $data = json_decode($update,true);
+
+
+    //     if(array_key_exists('channel_post',$data)){
+    //         //telegram channel
+    //         dd($data);
+    //     }
+
+    //     if(array_key_exists('message',$data)){
+    //         //bot message
+    //         dd($data);
+    //     }
+
+    //     if(array_key_exists('my_chat_member',$data)){
+    //         //telegram group
+    //         dd($data);
+    //     }
+
+
+
+    // }
+
+
+
+    $id = $data['message']['chat']['id'];
+
+    $re = Telegram::sendMessage([
+        'chat_id' => $id,
+        'text' => 'Hello world!'
+    ]);
+
+
+    dd($re);
+
+
+
+    $response = Telegram::sendMessage([
+        'chat_id' => -877521648,
+        'text' => 'Hello Members'
+    ]);
+
+
+    dd($response);
 
     // //XzWjKXEA36p3
     // //post link and message
 
     // $app = App::find(1);
     // $pageId = $app->page_id;
-    // $accessToken = 'EAAJIRwTQl80BACMkgVGxxiWHnxYjZBMgQwR3MK7v3ZCmgL5xZAgDVIXksA8VywhVPrbi8ZCLO2aw6iO4eP80qdpsq8qZCQX18SswIcKkD2lKKbQjVHKyLxF3t7IsOlRglobqshlhrzsdN8sj8n9tmkzaCkTSO5YgvUXh3QZBZAoSow7JdB5kCMw';
+    // $accessToken = '';
 
     // $link = '';
     // $message = "Long lived phrase gpt";
@@ -67,18 +157,18 @@ Route::get('/media-bot-v001', function () {
     // }
 
 
-// dd('sandsadasdas');
+    // dd('sandsadasdas');
 
 
 
-    $longLivedMuigaiAccessToken = 'EAAJIRwTQl80BAGsjsWoxzZCdI06vlbQpnBnGO0gLULmqAXOUZAUVurOBFAKS8G4oxrwzCj1m2t3bWmCfwVlyNzfjS7MB5GUR9ZB0do7WYiAVYIC6SDA3OGtklWnq05jsaP9QblpNW4IytSYe1Jwi5GMpj7wnB0O28tZBTa9a1xzKkZB0MhJUW';
+    $longLivedMuigaiAccessToken = '';
     $expiring = 5105031;
     $generatedOn = '8 sep 2023';
 
 
     // //getting gapeLongLive access token
 
-    // $phraseMaskLongLiveAccessToken = 'EAAJIRwTQl80BACMkgVGxxiWHnxYjZBMgQwR3MK7v3ZCmgL5xZAgDVIXksA8VywhVPrbi8ZCLO2aw6iO4eP80qdpsq8qZCQX18SswIcKkD2lKKbQjVHKyLxF3t7IsOlRglobqshlhrzsdN8sj8n9tmkzaCkTSO5YgvUXh3QZBZAoSow7JdB5kCMw';
+    // $phraseMaskLongLiveAccessToken = '';
 
     // try {
     //     $response = Http::get("https://graph.facebook.com/v17.0/1585553401966102/accounts", [
@@ -107,7 +197,7 @@ Route::get('/media-bot-v001', function () {
     //         'grant_type' => 'fb_exchange_token',
     //         'client_id' => 642419814078413,
     //         'client_secret' => 'f5cd33c0f9ea5193d686c078a8c33016',
-    //         'fb_exchange_token' => 'EAAJIRwTQl80BADgpCaoA3zmAuIuYtTLX7OiybQ5oZCwj1JvDFfKGqvbWzQHoRZBfxYuZBPLsGSl0UHDAG1o7JY27avDBJ1cA4JxcD4BUz2V5Gs4pLyDmXyRzPBVBZCfZBTRuxPciCoEGvxgCDmMf06CY9vOJWlOH28YUxee6XOCeK4OudPxaHR4yZBYMQ2XP8kwZChjzZBhp4e3oliZCK1BG2CpDnf95VSLyeHjlguc1ZAxI94xHWKhwY1',
+    //         'fb_exchange_token' => '',
     //     ]);
 
     //     // Handle the response
@@ -146,4 +236,4 @@ Route::get('/media-bot-v001', function () {
 });
 
 
-Route::get('/test',[TestController::class,'index']);
+Route::get('/test', [TestController::class, 'index']);
