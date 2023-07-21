@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\ImageSchedulerCast;
 use App\Casts\SchedulerCreatedAtCast;
 use App\Casts\SchedulerMessageContentCast;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -33,5 +34,6 @@ class Schedule extends Model
     protected $casts = [
         'messageContent'=>SchedulerMessageContentCast::class,
         'created_at'=>SchedulerCreatedAtCast::class,
+        'images'=>ImageSchedulerCast::class,
     ];
 }

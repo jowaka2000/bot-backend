@@ -48,14 +48,23 @@ Route::middleware('auth:sanctum')->group(function () {
 
     Route::controller(PostSchedulersController::class)->group(function(){
         Route::get('/schedule-post/posts/{app_id}','index');
+        Route::get('/schedule-post/show/{id}','show');
         Route::post('/schedule-post/create','store');
+        Route::post('/schedule-post/update/{id}','updateImage');
+        Route::post('/schedule-post/update-url/{id}','updateUrl');
+        Route::post('/schedule-post/delete-url/{id}','deleteUrl');
+        Route::post('/schedule-post/update-schedule/{id}','updateSchedule');
+        Route::post('/schedule-post/{id}/edit','addMessage');
+        Route::post('/schedule-post/{id}/delete-image','deleteImage');
         Route::delete('/schedule-post/{id}/delete','destroy');
+        Route::post('/schedule-post/message-content/{id}/delete','deleteMessage');
     });
 
 
     Route::controller(TelegramApisController::class)->group(function(){
         Route::get('/telegram/get-channels/{app_id} ','getChannels');
         Route::post('/telegram/set-chat-id/{app_id}','setChatId');
+        Route::get('/telegram/get-chats/{id}','getAllMessages');
     });
 });
 

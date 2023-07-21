@@ -32,13 +32,12 @@ class PostOnFacebookPageCommand extends Command
      */
     public function handle()
     {
-        Log::emergency("Start");
 
         $schedulers1 = Schedule::join('apps', 'apps.id', '=', 'schedules.app_id')
             ->where('schedules.active', true)
             ->where('apps.active', true)
-            ->where('apps.approved',true)
-            ->where('apps.activated',true)
+            ->where('apps.approved', true)
+            ->where('apps.activated', true)
             ->where('apps.bot_type', '=', 'facebook-page')
             ->select('schedules.*')
             ->get();
@@ -58,14 +57,14 @@ class PostOnFacebookPageCommand extends Command
                     if ($schedule->schedule !== 'once' && $schedule->schedule !== 'none') {
 
                         $this->checkToPost($schedule);
-                    }else{
+                    } else {
                         return;
                     }
-                }else{
+                } else {
                     return;
                 }
             }
-        }else{
+        } else {
             return;
         }
     }
@@ -116,7 +115,7 @@ class PostOnFacebookPageCommand extends Command
 
 
             $this->postToFacebookPage($schedule, $nextTimeToPost);
-        }else{
+        } else {
             // dd('not pased');
             return;
         }
@@ -145,7 +144,7 @@ class PostOnFacebookPageCommand extends Command
                 if ($schedule->url === '') {
                     //we are only posting images .....
 
-                    $images = json_decode($schedule->images);
+                    $images = $schedule->images;
 
                     if ($images && count($images) > 0) {
 
@@ -171,7 +170,7 @@ class PostOnFacebookPageCommand extends Command
                 } else {
                     // post url ................................................
 
-                    $images = json_decode($schedule->images);
+                    $images = $schedule->images;
 
                     if ($images && count($images) > 0) {
                         //post the image and url
@@ -206,12 +205,12 @@ class PostOnFacebookPageCommand extends Command
                 //there are messages
 
 
-                $images = json_decode($schedule->images);
+                $images = $schedule->images;
 
 
                 if ($images && count($images) > 0) {
                     //post the image and the message -----------------------------------------------------
-                
+
                     $imageIndexToPost = $this->imageIndexToPost($schedule->history, $images);
 
                     $messageIndexToPost = $this->messageContentIndexToPost($schedule->history, $messages);
@@ -219,7 +218,7 @@ class PostOnFacebookPageCommand extends Command
                     $firstImage = $images[$imageIndexToPost];
 
                     $url = asset('/images/' . $firstImage);
-                    $message = $messages[$messageIndexToPost] .' '. $schedule->url;
+                    $message = $messages[$messageIndexToPost] . ' ' . $schedule->url;
 
                     $history = [
                         'last image index posted' => $imageIndexToPost,
@@ -246,12 +245,12 @@ class PostOnFacebookPageCommand extends Command
 
 
 
-                    $this->asset($pageId, $accessToken, $message, $link, $schedule, $history, $nextTimeToPost);
+                    $this->messageAndUrl($pageId, $accessToken, $message, $link, $schedule, $history, $nextTimeToPost);
 
                     //...............................................end
                 }
             }
-        }else{
+        } else {
             return;
         }
     }
@@ -270,7 +269,7 @@ class PostOnFacebookPageCommand extends Command
             $history = json_decode($history, true);
 
 
-            if ($history && array_key_exists('last message index',$history)) {
+            if ($history && array_key_exists('last message index', $history)) {
 
 
                 $index = $history['last message index'];
@@ -283,7 +282,7 @@ class PostOnFacebookPageCommand extends Command
                 } else {
                     return $index;
                 }
-            }else{
+            } else {
 
                 return 0;
             }
@@ -303,7 +302,7 @@ class PostOnFacebookPageCommand extends Command
 
             $history = json_decode($history, true);
 
-            if ($history && array_key_exists('last image index posted',$history)) {
+            if ($history && array_key_exists('last image index posted', $history)) {
                 $index = $history['last image index posted'];
 
 
@@ -314,7 +313,7 @@ class PostOnFacebookPageCommand extends Command
                 } else {
                     return $index;
                 }
-            }else{
+            } else {
                 return 0;
             }
         } else {
@@ -327,7 +326,6 @@ class PostOnFacebookPageCommand extends Command
     {
 
         $message = $messages;
-
 
 
         try {
@@ -351,7 +349,7 @@ class PostOnFacebookPageCommand extends Command
 
             $re = json_decode($response, true);
 
-            if (array_key_exists('error',$re)) {
+            if (array_key_exists('error', $re)) {
                 Fail::create([
                     'app_id' => $schedule->app_id,
                     'message' => $re['error']['message'],
@@ -392,7 +390,7 @@ class PostOnFacebookPageCommand extends Command
 
             $re = json_decode($response, true);
 
-            if (array_key_exists('error',$re)) {
+            if (array_key_exists('error', $re)) {
                 Fail::create([
                     'app_id' => $schedule->app_id,
                     'message' => $re['error']['message'],
@@ -400,7 +398,6 @@ class PostOnFacebookPageCommand extends Command
                     'type' => $re['error']['code'],
                 ]);
             }
-
         } catch (\Exception $error) {
             // dd($error);
             // echo 'Error occurred while posting: ' . $error->getMessage();

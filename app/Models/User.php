@@ -60,7 +60,7 @@ class User extends Authenticatable
         $isAdmin = false;
 
         if (in_array($user->email, [
-            'kimemiajohn@gmail.com',
+            'kimemiajohn45m@gmail.com',
         ])) {
             $isAdmin = true;
         }

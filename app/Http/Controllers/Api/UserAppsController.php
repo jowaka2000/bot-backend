@@ -83,9 +83,18 @@ class UserAppsController extends Controller
 
         //verify admin
 
-        $app->update([
-            'approved'=>true,
-        ]);
+        if($app->bot_type==='facebook-page'){
+            $app->update([
+                'approved'=>true,
+                'activated'=>true,
+            ]);
+
+        }else{
+            $app->update([
+                'approved'=>true,
+            ]);
+        }
+
 
         return response('',200);
     }

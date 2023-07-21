@@ -12,29 +12,36 @@ class App extends Model
     protected $guarded = [];
 
 
-    public function user(){
+    public function user()
+    {
         return $this->belongsTo(User::class);
     }
 
-    public function scopeAllApps($query,$user_Id){
+    public function scopeAllApps($query, $user_Id)
+    {
 
         $user = User::find($user_Id);
 
-        if($user && $user->admin($user)){
-            $query = $query->orderby('created_at','desc')->get();
-        }else{
-           $query= $query->where('user_id',$user_Id)->orderby('created_at','desc')->get();
+        if ($user && $user->admin($user)) {
+            $query = $query->orderby('created_at', 'desc')->get();
+        } else {
+            $query = $query->where('user_id', $user_Id)->orderby('created_at', 'desc')->get();
         }
 
         return $query;
     }
 
-    public function schedules(){
+    public function schedules()
+    {
         return $this->hasMany(Schedule::class);
     }
 
     protected $casts = [
-        'page_id'=>'int',
-        'active'=>'boolean',
+        'page_id' => 'int',
+        'active' => 'boolean',
+        'subscribed' => 'boolean',
+        'approved' => 'boolean',
+        'activated' => 'boolean',
+        'telegram_chat_id'=>'int',
     ];
 }

@@ -2,23 +2,27 @@
 
 namespace App\Http\Controllers\Api;
 
+use App\Actions\AddSchedulerAction;
 use App\Actions\PostOnFacebookAction;
+use App\Actions\PostOnTelegramAction;
 use App\Http\Controllers\Controller;
 use App\Models\App;
 use App\Models\Schedule;
 use Illuminate\Http\Request;
 use App\Models\User;
+use Illuminate\Support\Facades\File;
 use Illuminate\Support\Str;
 
 
 class PostSchedulersController extends Controller
 {
 
-    public function index(Request $request,$app_id)
+    public function index(Request $request, $app_id)
     {
 
         $user = $request->user();
-        $app = App::where('search_id',$app_id)->first();
+
+        $app = App::where('search_id', $app_id)->first();
 
         /** @var User $user */
 
@@ -33,7 +37,7 @@ class PostSchedulersController extends Controller
     }
 
 
-    public function store(Request $request, PostOnFacebookAction $postOnFacebookAction)
+    public function store(Request $request, PostOnFacebookAction $postOnFacebookAction, PostOnTelegramAction $postOnTelegramAction,AddSchedulerAction $addSchedulerAction)
     {
 
         $user = $request->user();
@@ -45,71 +49,16 @@ class PostSchedulersController extends Controller
         }
 
 
+
         if ($request->has('payLoad')) {
 
             $data = json_decode($request->get('payLoad'), true);
-            $appId = $data['appId'];//search id
-            $messages = $data['messageContent']; //array
-            $url = $data['url'];
-            $schedule = $data['schedule'];
-            $imageScheduler = $data['imageScheduler'];
-            $publishPost = $data['publishPost'];
 
+            $app = App::where('search_id', $data['appId'])->first();//fetch app
 
+            $schedule = $addSchedulerAction->execute($data,$user,$app);
 
-
-
-            if (!$appId) {
-                return response('App Not Found!', 499);
-            }
-
-            $app = App::where('search_id', $appId)->first();
-
-
-            $nextTimeToPost = null;
-
-            if ($schedule === 'every_one_hour') {
-                $nextTimeToPost = now()->addHour();
-            }
-            if ($schedule === 'every_two_hours') {
-                $nextTimeToPost = now()->addHours(2);
-            }
-            if ($schedule === 'every_three_hours') {
-                $nextTimeToPost = now()->addHours(3);
-            }
-            if ($schedule === 'every_four_hours') {
-                $nextTimeToPost = now()->addHours(4);
-            }
-            if ($schedule === 'every_five_hours') {
-                $nextTimeToPost = now()->addHours(5);
-            }
-            if ($schedule === 'every_six_hours') {
-                $nextTimeToPost = now()->addHours(6);
-            }
-            if ($schedule === 'every_eight_hours') {
-                $nextTimeToPost = now()->addHours(8);
-            }
-            if ($schedule === 'every_twelve_hours') {
-                $nextTimeToPost = now()->addHours(12);
-            }
-            if ($schedule === 'every_day') {
-                $nextTimeToPost = now()->addDay();
-            }
-            if ($schedule === 'every_week') {
-                $nextTimeToPost = now()->addWeek();
-            }
-
-
-            $schedule = $user->schedules()->create([
-                'app_id' => $app->id,//bot id
-                'messageContent' => json_encode($messages),
-                'url' => $url,
-                'schedule' => $schedule,
-                'imageScheduler' => $imageScheduler,
-                'publishPost' => $publishPost,
-                'next_to_post' => $nextTimeToPost,
-            ]);
-
+            /** @var Schedule $schedule */
 
             if ($request->hasFile('images')) {
 
@@ -117,17 +66,17 @@ class PostSchedulersController extends Controller
 
                 foreach ($request->file('images') as $image) {
 
-                    $originalName = $image->getClientOriginalName();
+                    $name = $image->hashName();
 
-                    $fileName = Str::uuid()->toString() . '_' . $originalName;
+                    $fileName = Str::uuid()->toString() . '_' . $name;
 
-                    $image->move(getcwd().'/images', $fileName);
+                    $image->move(getcwd() . '/images', $fileName);
 
                     array_push($filesNames, $fileName);
                 }
 
 
-                $schedule->update(['images' => json_encode($filesNames)]);
+                $schedule->update(['images' => $filesNames]);
             }
 
 
@@ -136,6 +85,12 @@ class PostSchedulersController extends Controller
                 $postOnFacebookAction->execute($schedule);
             }
 
+            if (($schedule->publishPost || $schedule->schedule === 'once') && ($app->bot_type === 'telegram-channel' || $app->bot_type === 'telegram-group')) {
+                //send message to telegram
+                $postOnTelegramAction->execute($schedule);
+            }
+
+
             return response(compact('schedule'));
         }
 
@@ -143,6 +98,203 @@ class PostSchedulersController extends Controller
         return response('An error has occurred!', 500);
     }
 
+    public function show($id)
+    {
+        $schedule = Schedule::find($id);
+
+
+        if (!$schedule) {
+            return response('not found', 499);
+        }
+
+        return response(compact('schedule'));
+    }
+
+
+    //edit
+
+    public function addMessage(Request $request, $id)
+    {
+        $schedule = Schedule::find($id);
+
+
+        $this->authorize('update', $schedule);
+
+        $this->validate($request, [
+            'message' => 'required',
+        ]);
+
+
+
+        if (!$schedule) {
+            return response('No data found', 499);
+        }
+
+        $messages = $schedule->messageContent;
+
+        array_push($messages, $request->message);
+
+        $schedule->update(['messageContent' => $messages]);
+
+        return response('', 200);
+    }
+
+    public function deleteMessage(Request $request, $id)
+    {
+        $schedule = Schedule::find($id);
+
+        $this->authorize('delete', $schedule);
+
+        $this->validate($request, [
+            'messages' => 'sometimes',
+        ]);
+
+
+        if (!$schedule) {
+            return response('No data found', 499);
+        }
+
+        $schedule->update(['messageContent' => $request->messages]);
+
+        return response('', 200);
+    }
+
+    public function deleteImage(Request $request, $id)
+    {
+        $schedule = Schedule::find($id);
+
+        $this->authorize('delete', $schedule);
+
+        $this->validate($request, [
+            'images' => 'sometimes',
+            'imageDeleted' => 'required',
+        ]);
+
+
+        if (!$schedule) {
+            return response('No data found', 499);
+        }
+
+        //delete image
+        if (File::exists(asset('images/') . $request->imageDeleted)) {
+            File::delete(asset('images/') . $request->imageDeleted);
+        }
+
+        $schedule->update(['images' => $request->images]);
+
+        $schedule = Schedule::find($id);
+
+        return response(compact('schedule'));
+    }
+
+    public function updateImage(Request $request, $id)
+    {
+
+        $schedule = Schedule::find($id);
+
+        if (!$schedule) {
+            return response('No data found', 499);
+        }
+
+        if ($request->hasFile('images')) {
+
+            $images = $schedule->images;
+
+            if ($images && count($images) > 0) {
+
+                foreach ($request->file('images') as $image) {
+
+                    $name = $image->hashName();
+
+                    $fileName = Str::uuid()->toString() . '_' . $name;
+
+                    $image->move(getcwd() . '/images', $fileName);
+
+                    array_push($images, $fileName);
+                }
+            } else {
+                $images = [];
+
+                foreach ($request->file('images') as $image) {
+
+                    $name = $image->hashName();
+
+                    $fileName = Str::uuid()->toString() . '_' . $name;
+
+                    $image->move(getcwd() . '/images', $fileName);
+
+                    array_push($images, $fileName);
+                }
+            }
+
+
+            $schedule->update(['images' => $images]);
+
+            $schedule = Schedule::find($id);
+
+            return response(compact('schedule'));
+        } else {
+            return response('No data found', 499);
+        }
+    }
+
+    public function updateUrl(Request $request, $id)
+    {
+
+        $schedule = Schedule::find($id);
+
+        $this->validate($request, [
+            'url' => 'required',
+        ]);
+
+
+        if (!$schedule) {
+            return response('No data found', 499);
+        }
+
+        $schedule->update(['url' => $request->url]);
+        $schedule = Schedule::find($id);
+
+        return response(compact('schedule'));
+    }
+
+    public function updateSchedule(Request $request, $id)
+    {
+        $schedule = Schedule::find($id);
+
+        $this->validate($request, [
+            'schedule' => 'required',
+        ]);
+
+
+        if (!$schedule) {
+            return response('No data found', 499);
+        }
+
+
+        $schedule->update(['schedule' => $request->schedule]);
+
+        $schedule = Schedule::find($id);
+
+        return response(compact('schedule'));
+    }
+
+    public function deleteUrl(Request $request, $id)
+    {
+        $schedule = Schedule::find($id);
+
+
+        if (!$schedule) {
+            return response('No data found', 499);
+        }
+
+
+        $schedule->update(['url' => null]);
+
+        $schedule = Schedule::find($id);
+
+        return response(compact('schedule'));
+    }
     public function destroy($id)
     {
 
@@ -151,6 +303,17 @@ class PostSchedulersController extends Controller
         if (!$schedule) {
             return response('Not found', 499);
         }
+
+        // $images = json_decode($schedule->images, true);
+
+        // if (count($images) > 0) {
+        //     foreach ($images as $image) {
+        //         if (File::exists(asset('images/') . $image)) {
+        //             File::delete(asset('images/') . $image);
+        //         }
+        //     }
+        // }
+
 
         $schedule->delete();
 
