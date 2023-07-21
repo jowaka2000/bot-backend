@@ -8,12 +8,11 @@ use App\Models\User;
 use FacebookAds\Object\AdAccount;
 use FacebookAds\Object\Fields\AdAccountFields;
 use FacebookAds\Object\Fields\AdSetFields;
-use Faker\Provider\Uuid;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Route;
 use Telegram\Bot\Laravel\Facades\Telegram;
-use Illuminate\Support\Str;
 use Telegram\Bot\Api;
+use Telegram\Bot\FileUpload\InputFile;
 
 /*
 |--------------------------------------------------------------------------
@@ -29,30 +28,169 @@ use Telegram\Bot\Api;
 Route::get('/', function () {
 
 
-    $schedulers = Schedule::join('apps', 'apps.id', '=', 'schedules.app_id')
-    ->where('schedules.active', true)
-    ->where('apps.active', true)
-    ->where('apps.activated', true)
-    ->where('apps.approved', true)
-    ->where(function ($query) {
-        return $query->where('apps.bot_type', '=', 'telegram-channel')->orWhere('apps.bot_type', '=', 'telegram-group');
-    })
-    ->whereNot('schedules.schedule','=','once')
-    ->select('schedules.*')
-    ->get();
-
-    dd($schedulers);
 
 
-        if(count($schedulers)>0){
 
-            foreach($schedulers as $scheduler){
-                $app= $scheduler->app;
-                dd($scheduler);
+    $app = App::find(1);
 
 
+    $accessToken = $app->telegram_bot_access_token;
+    $chat_id = $app->telegram_chat_id;
+
+    $api = new Api($accessToken);
+    $imageUlr = 'https://phrasemaskgpt.space/static/media/advert.059f9f8c60157d5e41f3.jpg';
+
+
+    $re = InputFile::create($imageUlr, 'Bot Upload');
+
+
+
+    try {
+        $response = $api->sendPhoto([
+            'chat_id' => $chat_id,
+            'photo' => $re,
+            'caption' => 'Get Invited to our strong hold and every time we want'
+        ]);
+
+
+
+        dd($response);
+    }catch(Exception $e){
+dd($e);
+    }
+
+
+
+    $updates = $api->getUpdates();
+
+
+
+    $chats= [];
+
+    foreach($updates as $update){
+        $newUpdate =json_decode( $update,true);
+
+        if(array_key_exists('message',$newUpdate)){
+            $id = $newUpdate['message']['chat']['id'];
+            if($id===$chat_id){
+                array_push($chats,$update);
             }
         }
+
+        if(array_key_exists('channel_post',$newUpdate)){
+           $id= $newUpdate['channel_post']['chat']['id'];
+
+           if($id===$chat_id){
+            array_push($chats,$update);
+        }
+
+        }
+    }
+
+    dd($chats);
+
+
+
+
+    $update =json_decode( $updates[1],true);
+
+    dd($update);
+    dd(array_key_exists('message',$update));
+
+
+    dd($update['message']);
+
+    $update =json_decode( $updates[0],true);
+
+    dd($update);
+
+
+
+    $schedule = Schedule::find(14);
+
+
+    $messages = $schedule->messageContent;
+
+
+    dd($messages);
+
+
+    if (count($messages) > 0) {
+
+    }else{
+        $messages='NEW MESSAGE';
+    }
+
+    dd(json_encode($messages));
+
+
+    $myArray = array(['neno mja','pikipiki','harusi']);
+
+
+
+    unset($myArray[0][1]);
+
+    dd($myArray);
+
+
+
+
+
+    $ACCESS_TOKEN='1534900936124125186-0FMfGSmWWPayg5dpo1ySnp8tpUYq8k';
+
+    $USERNAME = '@buitengebieden';
+
+    try {
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $ACCESS_TOKEN,
+        ])->get("https://api.twitter.com/2/users/by/username/@Kimemia08845017");
+
+        dd($response);
+        if ($response->successful()) {
+            $data = $response->json();
+            // Process the response data
+
+
+        } else {
+            // Handle unsuccessful response
+            $statusCode = $response->status();
+            // Handle specific error scenarios
+
+
+        }
+    } catch (\Exception $e) {
+        // Handle any exceptions that occur during the request
+    }
+
+
+
+
+    // dd('sandsadasdas');
+
+    // $schedulers = Schedule::join('apps', 'apps.id', '=', 'schedules.app_id')
+    // ->where('schedules.active', true)
+    // ->where('apps.active', true)
+    // ->where('apps.activated', true)
+    // ->where('apps.approved', true)
+    // ->where(function ($query) {
+    //     return $query->where('apps.bot_type', '=', 'telegram-channel')->orWhere('apps.bot_type', '=', 'telegram-group');
+    // })
+    // ->whereNot('schedules.schedule','=','once')
+    // ->select('schedules.*')
+    // ->get();
+
+    // dd($schedulers);
+
+
+    // if(count($schedulers)>0){
+
+    //     foreach($schedulers as $scheduler){
+    //         $app= $scheduler->app;
+    //         dd($scheduler);
+
+
+    //     }
+    // }
 
     $user = User::find(1);
 
@@ -136,28 +274,7 @@ Route::get('/', function () {
     // //XzWjKXEA36p3
     // //post link and message
 
-    // $app = App::find(1);
-    // $pageId = $app->page_id;
-    // $accessToken = '';
 
-    // $link = '';
-    // $message = "Long lived phrase gpt";
-    // try {
-    //     $response = Http::post("https://graph.facebook.com/{$pageId}/feed", [
-    //         'message' => $message,
-    //         'link' => $link,
-    //         'access_token' => $accessToken,
-    //     ]);
-
-
-    //     dd($response);
-    // } catch (Exception $error) {
-    //     dd($error);
-    //     // echo "Error occurred while posting: " . $error->getMessage();
-    // }
-
-
-    // dd('sandsadasdas');
 
 
 
@@ -234,6 +351,8 @@ Route::get('/', function () {
 
     return view('welcome');
 });
+
+
 
 
 Route::get('/test', [TestController::class, 'index']);

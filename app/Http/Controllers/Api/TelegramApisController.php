@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\App;
+use App\Models\Schedule;
 use Illuminate\Http\Request;
 use Telegram\Bot\Api;
 
@@ -59,5 +60,57 @@ class TelegramApisController extends Controller
         ]);
 
         return response('',200);
+    }
+
+    public function getAllMessages(Request $request,$id){
+
+        $app = App::find($id);
+
+
+        if(!$app){
+            return response('no data found',499);
+        }
+
+        $accessToken = $app->telegram_bot_access_token;
+        $chat_id = $app->telegram_chat_id;
+
+        if(!$accessToken || !$chat_id){
+            return response('server error',599);
+        }
+
+
+        $api = new Api($accessToken);
+
+        $updates = $api->getUpdates();
+
+
+        $chats= [];
+
+        foreach($updates as $update){
+            $newUpdate =json_decode( $update,true);
+
+            if(array_key_exists('message',$newUpdate)){
+                $id = $newUpdate['message']['chat']['id'];
+                if($id===$chat_id){
+                    array_push($chats,$update['message']);
+                }
+            }
+
+            if(array_key_exists('channel_post',$newUpdate)){
+               $id= $newUpdate['channel_post']['chat']['id'];
+
+               if($id===$chat_id){
+                array_push($chats,$update['channel_post']);
+            }
+
+            }
+        }
+
+
+        array_reverse($chats);
+
+
+
+        return response(compact('chats'));
     }
 }

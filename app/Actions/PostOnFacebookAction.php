@@ -35,7 +35,7 @@ class PostOnFacebookAction
 
                     //we are only posting images .....
 
-                    $images = json_decode($schedule->images);
+                    $images = $schedule->images;
 
                     if ($images && count($images) > 0) {
                         //post the image
@@ -57,7 +57,7 @@ class PostOnFacebookAction
                     //check images
 
 
-                    $images = json_decode($schedule->images);
+                    $images = $schedule->images;
 
                     if ($images && count($images) > 0) {
                         //post the image
@@ -86,7 +86,7 @@ class PostOnFacebookAction
             } else {
                 //there are messages
 
-                $images = json_decode($schedule->images);
+                $images = $schedule->images;
 
 
                 if ($images && count($images) > 0) {
