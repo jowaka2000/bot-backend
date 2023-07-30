@@ -67,4 +67,12 @@ class User extends Authenticatable
 
         return $isAdmin;
     }
+
+    public function role(){
+        return $this->hasOne(Role::class);
+    }
+
+    public function setting(){
+        return $this->hasOne(Setting::class);
+    }
 }

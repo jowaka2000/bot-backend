@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\AuthsController;
 use App\Http\Controllers\Api\PostSchedulersController;
+use App\Http\Controllers\Api\SettingsController;
 use App\Http\Controllers\Api\TelegramApisController;
 use App\Http\Controllers\Api\UserAppsController;
 use Illuminate\Http\Request;
@@ -65,6 +66,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/telegram/get-channels/{app_id} ','getChannels');
         Route::post('/telegram/set-chat-id/{app_id}','setChatId');
         Route::get('/telegram/get-chats/{id}','getAllMessages');
+    });
+
+
+    //get settings
+
+    Route::controller(SettingsController::class)->group(function(){
+        Route::get('settings/index','index');
     });
 });
 
