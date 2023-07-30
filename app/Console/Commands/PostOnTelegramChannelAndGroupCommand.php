@@ -63,7 +63,7 @@ class PostOnTelegramChannelAndGroupCommand extends Command
 
 
                     //check if time to post is past
-                    if ($timeToPost) {
+                    if ($timeToPost->isPast()) {
                         //we can post
 
                         $api = new Api($accessToken);

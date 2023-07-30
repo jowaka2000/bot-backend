@@ -129,7 +129,7 @@ class PostOnFacebookAction
 
 
         try {
-            $response = Http::post("https://graph.facebook.com/{$pageId}/feed", [
+            $response = Http::post("https://graph.facebook.com/$pageId/feed", [
                 'message' => $message,
                 'link' => $link,
                 'access_token' => $accessToken,
@@ -165,7 +165,7 @@ class PostOnFacebookAction
     {
 
         try {
-            $response = Http::post("https://graph.facebook.com/{$pageId}/photos", [
+            $response = Http::post("https://graph.facebook.com/$pageId/photos", [
                 'url' => $photoUrl,
                 'message' => $message,
                 'link' => $link,
